@@ -1,0 +1,63 @@
+COMPANY: Harborlight Logistics
+YEAR: 2024
+
+[PAGE 5]
+Harborlight Logistics is a European freight forwarding and contract logistics group. The
+company arranges ocean, air and road freight on behalf of industrial and retail customers
+and operates 22 warehouses with a combined 610,000 square metres of storage capacity. The
+group does not own vessels or aircraft and purchases capacity from carriers, which means
+reported revenue moves with prevailing freight rates. Approximately 58 percent of gross
+revenue relates to purchased transport capacity. The group employed 6,400 people at year end
+and served 3,100 active customers, the largest of which represented 4 percent of net
+revenue.
+
+[PAGE 9]
+Gross revenue increased to EUR 2.85 billion in 2024 from EUR 2.61 billion in 2023, while net
+revenue, defined as gross revenue less purchased transport capacity, increased to EUR 1.20
+billion from EUR 1.14 billion. The divergence reflects the pass-through of higher container
+rates to customers. Ocean freight volumes measured in twenty-foot equivalent units grew 3
+percent, air freight tonnage grew 9 percent, and contract logistics revenue grew 7 percent
+supported by two new warehouse contracts in the Netherlands.
+
+[PAGE 12]
+Purchased transport capacity cost EUR 1.65 billion, an increase of 12 percent. Container
+spot rates on Asia to North Europe routes rose sharply during the second quarter following
+capacity disruption on Red Sea routings, and average rates for the full year were 34 percent
+above the prior year. The group was able to pass through the majority of these higher
+freight costs to customers under index-linked contracts, although a lag of approximately six
+weeks applies to most agreements. Air freight rates rose 11 percent as shippers switched
+from ocean to air for time-critical cargo, a shift the group also observed among its
+industrial manufacturing customers.
+
+[PAGE 15]
+Adjusted EBITDA increased to EUR 214 million from EUR 196 million, and adjusted EBITDA
+margin on net revenue was 17.8 percent compared with 17.2 percent. Margin improvement was
+driven by higher air freight gross profit per shipment and by warehouse automation
+investments completed in 2023. Contract logistics margins were stable. The group notes that
+its margin on net revenue is a more meaningful measure than margin on gross revenue, since
+the latter is distorted by movements in purchased transport rates.
+
+[PAGE 18]
+Energy and fuel costs increased by EUR 23 million year on year. Diesel represented the
+largest component, reflecting the group's owned road fleet of 480 vehicles, while warehouse
+electricity costs rose following the expiry of fixed-price contracts in three countries.
+Higher energy prices were partially offset by a fuel surcharge mechanism applied to road
+freight customers, which recovered approximately 70 percent of the increase. The group
+continued its programme of converting warehouse lighting and refrigeration to lower
+consumption equipment, and reduced electricity use per square metre by 6 percent.
+
+[PAGE 22]
+Management expects container rates to normalise during 2025 as new vessel capacity enters
+service, which would reduce both gross revenue and purchased transport cost with limited net
+revenue impact. Guidance for 2025 is net revenue growth of 3 to 6 percent and an adjusted
+EBITDA margin on net revenue of 17 to 19 percent. Management expects continued volume growth
+in contract logistics and has committed capital expenditure of EUR 55 million to two
+automated warehouse projects.
+
+[PAGE 25]
+Principal risks are freight rate volatility, carrier capacity availability, fuel and energy
+price exposure, customer credit risk in the retail segment, and regulatory change relating
+to emissions reporting for transport services. The group is exposed to counterparty risk
+where it commits to carrier capacity in advance of customer commitments. Emissions reporting
+obligations under European regulation expanded during the year and the group invested in
+carrier-level emissions data collection to meet customer reporting requirements.

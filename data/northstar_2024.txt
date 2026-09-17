@@ -1,0 +1,105 @@
+COMPANY: Northstar Industrial
+YEAR: 2024
+
+[PAGE 4]
+Northstar Industrial is a European manufacturer of industrial pumps, valves and flow
+control systems. The group operates through two reporting segments. Industrial Systems
+designs and assembles pump and valve platforms for water utilities, chemical processing
+and district energy customers. Aftermarket Services provides spare parts, retrofits,
+condition monitoring and field maintenance for the installed base, which the group
+estimates at approximately 240,000 active units. Manufacturing is concentrated in four
+plants located in Sweden, Poland, Germany and Spain, supported by a new assembly facility
+in Poland that began production during the second quarter of 2024. The group employed
+4,180 people at year end and sells into 38 countries, with Germany, the Nordics and the
+Benelux region representing the largest share of revenue. Approximately 71 percent of
+revenue was generated in the European Union, 18 percent in the United Kingdom and
+Switzerland, and the remainder across export markets in the Middle East and South East
+Asia.
+
+[PAGE 12]
+Revenue increased to EUR 1.45 billion in 2024 from EUR 1.39 billion in 2023, corresponding
+to growth of 4.3 percent. Organic growth was 3.1 percent, with the remainder attributable
+to the full-year effect of the Valveco acquisition completed in late 2023 and a small
+positive currency translation effect. Growth was driven primarily by higher sales volumes
+in the Industrial Systems division, where order intake for water utility projects remained
+strong throughout the year. Aftermarket Services grew 6.8 percent, benefiting from higher
+service contract attachment rates and price increases implemented at the start of the
+year. Order backlog at 31 December 2024 was EUR 612 million, up from EUR 578 million a
+year earlier, and management considers approximately 80 percent of the backlog to be
+deliverable within twelve months.
+
+[PAGE 14]
+Segment reporting is presented below. Industrial Systems generated revenue of EUR 1,012
+million, up from EUR 981 million, and segment EBITDA of EUR 148 million, down from EUR 176
+million. The decline reflects the cost of the plant ramp-up in Poland and higher inbound
+freight on cast components sourced from third-party foundries. Aftermarket Services
+generated revenue of EUR 438 million, up from EUR 410 million, and segment EBITDA of EUR
+114 million, up from EUR 108 million, with margins broadly stable at 26.0 percent.
+Unallocated group costs of EUR 16 million relate to central functions, insurance and
+group-level IT programmes. Intersegment revenue is eliminated on consolidation and was
+immaterial in both periods.
+
+[PAGE 18]
+Adjusted EBITDA decreased to EUR 246 million from EUR 278 million. Adjusted EBITDA margin
+declined from 20.0 percent to 17.0 percent. Management attributed the decline mainly to
+higher freight costs, higher energy prices, and temporary production inefficiencies during
+the ramp-up of the new plant in Poland. Freight and logistics expense increased by EUR 19
+million year on year, driven by container rate increases on Asian routes and a shift to
+air freight for a limited number of critical components during the second quarter. Energy
+costs increased by EUR 11 million despite lower consumption per unit produced, reflecting
+the expiry of a favourable electricity hedge at the end of 2023. Ramp-up inefficiencies,
+including scrap, rework and overtime at the Poland facility, are estimated at EUR 8
+million. Price increases recovered approximately EUR 14 million of the total cost
+headwind. Items excluded from adjusted EBITDA comprise restructuring charges of EUR 6
+million and acquisition-related costs of EUR 2 million.
+
+[PAGE 21]
+The company expects logistics costs to normalise during 2025 as contracted container rates
+reset and the temporary use of air freight ends. Management also expects efficiency
+measures at the new plant to improve margins gradually over the course of the year, with
+the majority of the benefit weighted to the second half. A new three-year electricity
+contract covering approximately 60 percent of expected consumption was signed in November
+2024. For 2025 the group guides to organic revenue growth of 2 to 5 percent and an
+adjusted EBITDA margin of 18 to 19 percent. The guidance assumes no material deterioration
+in European industrial demand and no further escalation in freight rates.
+
+[PAGE 26]
+Cash flow from operating activities was EUR 198 million compared with EUR 231 million in
+2023. The reduction reflects lower earnings and a EUR 24 million increase in working
+capital, principally inventory built ahead of the plant transition. Capital expenditure was
+EUR 92 million, of which EUR 41 million related to the Poland facility. Free cash flow was
+EUR 106 million, giving a cash conversion ratio of 43 percent of adjusted EBITDA. Net debt
+was EUR 421 million at year end, equivalent to 1.7 times adjusted EBITDA, compared with 1.4
+times a year earlier. The group's revolving credit facility of EUR 250 million was undrawn
+at the balance sheet date and matures in 2028. The board proposes a dividend of EUR 0.85
+per share, unchanged from the prior year.
+
+[PAGE 29]
+The principal risks identified by the board are input cost volatility, energy price
+exposure, supply chain concentration, and cyclical demand in European industrial
+end-markets. The group sources approximately 34 percent of cast components from three
+foundries, and disruption at any of these suppliers could delay deliveries. Cyber security
+risk has increased with the extension of remote condition monitoring to a larger share of
+the installed base. Climate transition risk affects the group in two directions: carbon
+pricing raises operating costs, while demand for energy-efficient pumping systems supports
+the Aftermarket retrofit business. The audit committee reviewed the group's risk register
+twice during the year.
+
+[PAGE 33]
+Revenue from the sale of goods is recognised when control transfers to the customer, which
+is generally on delivery. Service contract revenue is recognised over the contract term as
+the customer simultaneously receives and consumes the benefit. Adjusted EBITDA is a
+non-IFRS measure defined as operating profit before depreciation, amortisation,
+restructuring charges and acquisition-related costs. Management presents adjusted EBITDA
+because it believes the measure improves comparability between periods, and a
+reconciliation to operating profit is provided in note 6. Inventory is measured at the
+lower of cost and net realisable value, with cost determined on a weighted average basis.
+
+[PAGE 36]
+The group employed 4,180 people at 31 December 2024 compared with 3,940 a year earlier,
+with the increase concentrated in the Poland assembly facility and in Aftermarket field
+service roles. Voluntary employee turnover was 9.2 percent. The lost time injury frequency
+rate was 2.1 per million hours worked, an improvement from 2.6 in 2023. Women represented
+29 percent of the total workforce and 24 percent of management positions. The group
+completed a restructuring of its Spanish operations during the year, affecting 74
+positions, and recognised related charges of EUR 6 million.

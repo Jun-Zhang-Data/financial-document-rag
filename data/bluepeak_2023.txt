@@ -1,0 +1,51 @@
+COMPANY: BluePeak Software
+YEAR: 2023
+
+[PAGE 3]
+BluePeak Software provides cloud-based treasury and cash management software, sold on a
+subscription basis to mid-market and enterprise customers in Northern Europe and the DACH
+region. During 2023 the group served 1,190 customers and employed 980 people across offices
+in Stockholm, Amsterdam and Kraków; the Frankfurt office opened in January 2024. The
+product was delivered from a mixture of multi-tenant and legacy single-tenant environments,
+with 78 percent of customers on the multi-tenant platform at year end. Approximately 81
+percent of revenue was subscription revenue.
+
+[PAGE 7]
+Revenue increased to EUR 540 million in 2023 from EUR 471 million, growth of 14.6 percent.
+Growth was led by the Advanced edition and by initial traction in the DACH region following
+the appointment of a regional sales leader. Subscription revenue grew 16.1 percent while
+services revenue grew 5 percent. Deferred revenue at year end was EUR 231 million. The group
+noted a lengthening of enterprise sales cycles during the second half, which it attributed
+to increased procurement scrutiny of software budgets.
+
+[PAGE 10]
+Annual recurring revenue was EUR 462 million at 31 December 2023, up from EUR 398 million.
+Net revenue retention was 111 percent and gross revenue retention was 95 percent. Average
+annual recurring revenue per customer was EUR 361,000. The customer acquisition cost payback
+period was 24 months. Management identified reduction of the payback period as a priority
+for 2024, with actions focused on partner-sourced pipeline and a reduction in paid
+acquisition spend.
+
+[PAGE 13]
+Adjusted EBITDA was EUR 108 million and adjusted EBITDA margin was 20.0 percent, compared
+with 17.4 percent in 2022. Margin expansion reflected operating leverage on subscription
+revenue growth, partially offset by elevated customer acquisition costs and by the cost of
+operating two delivery environments during the platform migration. Sales and marketing
+expense was 31 percent of revenue. Research and development expense was EUR 99 million,
+equivalent to 18.3 percent of revenue. Cloud infrastructure expense was EUR 52 million,
+spread across two providers.
+
+[PAGE 16]
+For 2024 management guided to revenue growth of 12 to 16 percent and an adjusted EBITDA
+margin of 21 to 22 percent. The margin improvement was expected to come from lower customer
+acquisition costs and from completing the migration of single-tenant customers, which would
+remove the cost of running duplicate environments. Management stated an intention to
+consolidate European cloud workloads with a single provider during 2024 in order to secure
+committed-use discounts.
+
+[PAGE 21]
+Principal risks were competition from banking incumbents, dependence on two cloud
+infrastructure providers, information security obligations relating to customer payment
+data, lengthening enterprise sales cycles, and engineering recruitment in a competitive
+labour market. The group held ISO 27001 certification and was preparing for a SOC 2 Type II
+examination in the following year.

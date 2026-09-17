@@ -1,0 +1,90 @@
+COMPANY: BluePeak Software
+YEAR: 2024
+
+[PAGE 3]
+BluePeak Software provides cloud-based treasury and cash management software to mid-market
+and enterprise customers, primarily in Northern Europe and the DACH region. The platform is
+delivered as a multi-tenant subscription service and is sold in three editions, Core,
+Advanced and Enterprise, with optional modules for payment factory, in-house banking and
+FX exposure management. At year end the group served 1,340 customers, of which 214 were
+classified as enterprise accounts contributing more than EUR 250,000 of annual recurring
+revenue each. The group employed 1,120 people across offices in Stockholm, Amsterdam,
+Frankfurt and Kraków. Approximately 84 percent of revenue was subscription revenue, with
+the remainder from implementation services and training.
+
+[PAGE 8]
+Revenue increased to EUR 620 million in 2024, up from EUR 540 million in 2023, representing
+growth of 14.8 percent. Growth was driven by enterprise subscriptions and expansion in
+Northern Europe, where the group added 46 new enterprise customers during the year.
+Subscription revenue grew 17.2 percent while services revenue was broadly flat, reflecting
+a deliberate shift of implementation work to certified partners. Revenue from the DACH
+region grew 21 percent and now represents 27 percent of group revenue. Deferred revenue at
+year end was EUR 268 million, up 16 percent, providing visibility into the following year.
+
+[PAGE 11]
+Annual recurring revenue reached EUR 548 million at 31 December 2024, up from EUR 462
+million. Net revenue retention was 114 percent compared with 111 percent in the prior year,
+reflecting both seat expansion within existing accounts and module cross-sell. Gross
+revenue retention was 96 percent. Average annual recurring revenue per customer increased
+to EUR 409,000 from EUR 361,000. The group reports a customer acquisition cost payback
+period of 19 months, an improvement from 24 months, driven by a higher share of inbound and
+partner-sourced pipeline. Churn was concentrated in the Core edition among customers with
+fewer than 200 employees.
+
+[PAGE 14]
+Adjusted EBITDA increased to EUR 136 million from EUR 108 million. Adjusted EBITDA margin
+improved from 20.0 percent to 21.9 percent due to higher recurring revenue and lower
+customer acquisition costs. Sales and marketing expense fell to 28 percent of revenue from
+31 percent, as partner-sourced deals carried lower direct selling cost and paid acquisition
+spend was reduced. Gross margin improved by 90 basis points to 79.4 percent, helped by
+migration of the remaining single-tenant customers onto the multi-tenant platform.
+Partially offsetting these gains, cloud infrastructure expense grew faster than revenue,
+rising 19 percent year on year, and research and development expense increased to EUR 118
+million from EUR 99 million. Items excluded from adjusted EBITDA are share-based
+compensation of EUR 21 million and a EUR 4 million charge related to office consolidation
+in Amsterdam.
+
+[PAGE 17]
+Research and development expense was EUR 118 million, equivalent to 19.0 percent of
+revenue, compared with 18.3 percent in the prior year. Spend was directed primarily at the
+payment factory module, a rebuilt reconciliation engine, and machine learning features for
+cash forecasting. Capitalised development costs were EUR 14 million, amortised over three
+years. Cloud infrastructure expense was EUR 62 million. The group completed migration of
+its European workloads to a single hyperscale provider during the third quarter, and
+management expects the resulting committed-use discounts to moderate infrastructure cost
+growth from 2025.
+
+[PAGE 19]
+Management expects continued growth in enterprise subscriptions in 2025, while noting that
+cloud infrastructure costs remain an important margin sensitivity. Guidance for 2025 is
+revenue growth of 12 to 15 percent and an adjusted EBITDA margin of 22 to 24 percent.
+Management intends to hold sales and marketing expense broadly flat as a share of revenue
+and to fund further research and development from gross margin improvement. The guidance
+assumes no material change in enterprise software buying patterns and excludes the effect
+of any acquisitions.
+
+[PAGE 23]
+Cash flow from operating activities was EUR 152 million compared with EUR 114 million in
+2023. Free cash flow was EUR 131 million after capital expenditure and capitalised
+development costs of EUR 21 million. The group held net cash of EUR 96 million at year end
+and has no external borrowings other than lease liabilities of EUR 38 million. No dividend
+is proposed; the board intends to retain earnings to fund product development and selective
+acquisitions. The group repurchased EUR 25 million of shares during the year to offset
+dilution from employee equity plans.
+
+[PAGE 27]
+Principal risks are customer concentration in the enterprise segment, dependence on a
+single cloud infrastructure provider following the 2024 migration, information security and
+data protection obligations arising from the processing of customer payment data,
+competition from banking incumbents bundling treasury functionality, and the ability to
+recruit and retain engineering staff. The group holds ISO 27001 certification and completed
+a SOC 2 Type II examination during the year. A data protection impact assessment was
+carried out ahead of the launch of the cash forecasting feature.
+
+[PAGE 30]
+Headcount grew to 1,120 from 980, with 62 percent of the increase in research and
+development. Voluntary attrition was 11.4 percent, down from 14.1 percent. The Kraków
+engineering centre grew to 310 people and now hosts the majority of platform
+infrastructure work. Employee engagement scored 78 on the group's annual survey. Share-based
+compensation of EUR 21 million covered 640 participating employees under a three-year
+vesting programme.

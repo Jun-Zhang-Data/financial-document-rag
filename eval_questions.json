@@ -1,0 +1,135 @@
+[
+  {
+    "question": "Why did Northstar's EBITDA margin fall in 2024?",
+    "expected_sources": [{"company": "Northstar Industrial", "year": "2024", "page": "18"}],
+    "match": "any",
+    "answerable": true,
+    "note": "Harborlight 2024 p.12/p.18 discuss freight and energy costs and are lexical distractors."
+  },
+  {
+    "question": "What was Northstar's revenue in 2024?",
+    "expected_sources": [{"company": "Northstar Industrial", "year": "2024", "page": "12"}],
+    "match": "any",
+    "answerable": true
+  },
+  {
+    "question": "Why did BluePeak's EBITDA margin improve in 2024?",
+    "expected_sources": [{"company": "BluePeak Software", "year": "2024", "page": "14"}],
+    "match": "any",
+    "answerable": true
+  },
+  {
+    "question": "How did Northstar's EBITDA margin change from 2023 to 2024?",
+    "expected_sources": [
+      {"company": "Northstar Industrial", "year": "2023", "page": "16"},
+      {"company": "Northstar Industrial", "year": "2024", "page": "18"}
+    ],
+    "match": "all",
+    "answerable": true,
+    "note": "Needs both years in the candidate pool; the original single-year filter made this impossible."
+  },
+  {
+    "question": "Compare the EBITDA margins of Northstar and BluePeak in 2024.",
+    "expected_sources": [
+      {"company": "Northstar Industrial", "year": "2024", "page": "18"},
+      {"company": "BluePeak Software", "year": "2024", "page": "14"}
+    ],
+    "match": "all",
+    "answerable": true,
+    "note": "Needs both companies; the original first-match filter dropped one."
+  },
+  {
+    "question": "Why did freight costs increase for the industrial pump manufacturer in 2024?",
+    "expected_sources": [{"company": "Northstar Industrial", "year": "2024", "page": "18"}],
+    "match": "any",
+    "answerable": true,
+    "note": "No company named, so metadata filtering cannot help. Harborlight is a freight company and competes lexically."
+  },
+  {
+    "question": "What was BluePeak's net revenue retention in 2024?",
+    "expected_sources": [{"company": "BluePeak Software", "year": "2024", "page": "11"}],
+    "match": "any",
+    "answerable": true
+  },
+  {
+    "question": "How much did BluePeak spend on research and development in 2024?",
+    "expected_sources": [
+      {"company": "BluePeak Software", "year": "2024", "page": "17"},
+      {"company": "BluePeak Software", "year": "2024", "page": "14"}
+    ],
+    "match": "any",
+    "answerable": true,
+    "note": "The figure appears on both pages, so either is a correct retrieval."
+  },
+  {
+    "question": "What is Harborlight's guidance for 2025?",
+    "expected_sources": [{"company": "Harborlight Logistics", "year": "2024", "page": "22"}],
+    "match": "any",
+    "answerable": true,
+    "note": "The 2025 mention must not filter the pool to a year that does not exist in the corpus."
+  },
+  {
+    "question": "Why does Harborlight report margin on net revenue rather than gross revenue?",
+    "expected_sources": [{"company": "Harborlight Logistics", "year": "2024", "page": "15"}],
+    "match": "any",
+    "answerable": true
+  },
+  {
+    "question": "What dividend did Northstar propose for 2024?",
+    "expected_sources": [{"company": "Northstar Industrial", "year": "2024", "page": "26"}],
+    "match": "any",
+    "answerable": true
+  },
+  {
+    "question": "How did BluePeak's customer acquisition cost payback period change between 2023 and 2024?",
+    "expected_sources": [
+      {"company": "BluePeak Software", "year": "2023", "page": "10"},
+      {"company": "BluePeak Software", "year": "2024", "page": "11"}
+    ],
+    "match": "all",
+    "answerable": true
+  },
+  {
+    "question": "What acquisition did Northstar complete in 2023?",
+    "expected_sources": [{"company": "Northstar Industrial", "year": "2023", "page": "4"}],
+    "match": "any",
+    "answerable": true
+  },
+  {
+    "question": "Did BluePeak pay a dividend in 2024?",
+    "expected_sources": [{"company": "BluePeak Software", "year": "2024", "page": "23"}],
+    "match": "any",
+    "answerable": true,
+    "note": "The answer is a stated negative, which is harder to retrieve than a positive fact."
+  },
+  {
+    "question": "How many people did BluePeak employ at the end of 2024?",
+    "expected_sources": [
+      {"company": "BluePeak Software", "year": "2024", "page": "30"},
+      {"company": "BluePeak Software", "year": "2024", "page": "3"}
+    ],
+    "match": "any",
+    "answerable": true
+  },
+  {
+    "question": "What was Northstar's revenue in 2026?",
+    "expected_sources": [],
+    "match": "any",
+    "answerable": false,
+    "note": "Out of corpus range. The system should say it lacks evidence rather than answer from 2024."
+  },
+  {
+    "question": "Who is BluePeak's chief executive officer?",
+    "expected_sources": [],
+    "match": "any",
+    "answerable": false,
+    "note": "Never stated in the documents."
+  },
+  {
+    "question": "What was Harborlight's EBITDA margin in 2022?",
+    "expected_sources": [],
+    "match": "any",
+    "answerable": false,
+    "note": "Only 2023 and 2024 comparatives exist for Harborlight, and no 2022 margin is given."
+  }
+]
