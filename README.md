@@ -282,7 +282,7 @@ the input token count in the hundreds.
 
 ## Known limitations
 
-Stated plainly, because they are the first things I would be asked about:
+
 
 - The corpus is synthetic. It exercises the pipeline honestly, but it is not evidence that
   the pipeline handles real PDF filings.
