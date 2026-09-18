@@ -19,27 +19,40 @@ import json
 import os
 import statistics
 import time
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple
 
 from dotenv import load_dotenv
 
 from documents import corpus_stats, load_chunks
 from generation import generate_answer, pricing
-from retrieval import DEFAULT_EMBEDDING_MODEL, BaseRetriever, build_retriever
+from retrieval import (
+    DEFAULT_EMBEDDING_MODEL,
+    BaseRetriever,
+    HybridRetriever,
+    build_retriever,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 QUESTIONS_PATH = ROOT / "eval_questions.json"
 
-SourceKey = Tuple[str, str, str]
+SourceKey = tuple[str, str, str]
 
 
-def load_questions() -> List[dict]:
+def load_questions() -> list[dict]:
     return json.loads(QUESTIONS_PATH.read_text(encoding="utf-8"))
 
 
-def expected_keys(question: dict) -> List[SourceKey]:
+def expected_keys(question: dict) -> list[SourceKey]:
     return [(s["company"], s["year"], s["page"]) for s in question["expected_sources"]]
+
+
+def positive_int(value: str) -> int:
+    """argparse type that rejects zero and negatives with a readable message."""
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError(f"must be at least 1, got {number}")
+    return number
 
 
 def parse_args() -> argparse.Namespace:
@@ -50,7 +63,7 @@ def parse_args() -> argparse.Namespace:
         default=["bm25", "dense", "hybrid"],
         choices=["bm25", "dense", "hybrid"],
     )
-    parser.add_argument("--top-k", type=int, default=4)
+    parser.add_argument("--top-k", type=positive_int, default=4)
     parser.add_argument(
         "--llm",
         action="store_true",
@@ -58,12 +71,34 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--llm-retriever",
-        default="hybrid",
+        default="bm25",
         choices=["bm25", "dense", "hybrid"],
-        help="which retriever feeds the answer grading (default: hybrid)",
+        help="which retriever feeds the answer grading (default: bm25, the service default)",
     )
     parser.add_argument("--verbose", action="store_true", help="print per-question detail")
     return parser.parse_args()
+
+
+def warm_up(retriever: BaseRetriever, max_calls: int = 30, tolerance: float = 0.25) -> int:
+    """Run untimed queries until latency stops improving; return how many it took.
+
+    A fixed warm-up count is not enough. The first dense call costs an order of magnitude
+    more than a warm one, and how many calls that takes to decay depends on the machine.
+    With a fixed count the first timed retriever absorbs the remainder of model and
+    thread-pool initialisation, which made dense look several times slower than the hybrid
+    that contains it.
+    """
+    timings: list[float] = []
+
+    for _ in range(max_calls):
+        start = time.perf_counter()
+        retriever.retrieve("warm up", top_k=1)
+        timings.append(time.perf_counter() - start)
+
+        if len(timings) >= 5 and max(timings[-3:]) <= min(timings) * (1 + tolerance):
+            break
+
+    return len(timings)
 
 
 def evaluate_retrieval(
@@ -72,19 +107,18 @@ def evaluate_retrieval(
     top_k: int,
     verbose: bool,
     dedupe_pages: bool = False,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     answerable = [q for q in questions if q["answerable"]]
 
     hits = 0
     covered = 0
-    reciprocal_ranks: List[float] = []
-    latencies: List[float] = []
+    reciprocal_ranks: list[float] = []
+    latencies: list[float] = []
 
-    # Untimed warm-up: the first few dense queries pay for lazy model initialisation and
-    # thread-pool spin-up (166ms falling to ~17ms over five calls here), which would
-    # otherwise be charged to whichever retriever happens to run first.
-    for _ in range(5):
-        retriever.retrieve("warm up", top_k=1)
+    # Untimed warm-up: the first dense queries pay for lazy model initialisation and
+    # thread-pool spin-up, which would otherwise be charged to whichever retriever runs
+    # first.
+    warm_up(retriever)
 
     for question in questions:
         # Best of three: the wall clock in a shared environment is noisy, and the minimum
@@ -139,8 +173,12 @@ def evaluate_answers(
     retriever: BaseRetriever,
     questions: Sequence[dict],
     top_k: int,
-) -> Dict[str, float]:
-    """Grade generated answers. Requires an API key and spends tokens."""
+) -> dict[str, float | None]:
+    """Grade generated answers. Requires an API key and spends tokens.
+
+    ``cost_usd`` is None unless token prices are configured, which is why the values are
+    optional.
+    """
     answerable = [q for q in questions if q["answerable"]]
     unanswerable = [q for q in questions if not q["answerable"]]
 
@@ -149,7 +187,7 @@ def evaluate_answers(
     refused_correctly = 0
     input_tokens = 0
     output_tokens = 0
-    latencies: List[float] = []
+    latencies: list[float] = []
 
     for question in questions:
         retrieved = retriever.retrieve(question["question"], top_k=top_k)
@@ -189,6 +227,32 @@ def evaluate_answers(
     }
 
 
+def shared_retriever(
+    kind: str,
+    built: dict[str, BaseRetriever],
+    chunks,
+    embedding_model: str,
+) -> BaseRetriever:
+    """Build a retriever, reusing already-built components.
+
+    The hybrid must reuse the existing dense and BM25 instances rather than construct new
+    ones. Two SentenceTransformer models in one process encode the corpus twice and then
+    contend for the same CPU threads, which made the reported latencies swing by 3x
+    between runs while the quality metrics stayed identical.
+    """
+    if kind in built:
+        return built[kind]
+
+    if kind == "hybrid":
+        dense = shared_retriever("dense", built, chunks, embedding_model)
+        bm25 = shared_retriever("bm25", built, chunks, embedding_model)
+        built[kind] = HybridRetriever([dense, bm25])
+    else:
+        built[kind] = build_retriever(kind, chunks, embedding_model)
+
+    return built[kind]
+
+
 def main() -> None:
     args = parse_args()
     load_dotenv()
@@ -211,17 +275,15 @@ def main() -> None:
         f"{len(questions) - len(answerable)} unanswerable; top_k={args.top_k}"
     )
 
-    rows: List[Tuple[str, Dict[str, float]]] = []
-    built: Dict[str, BaseRetriever] = {}
+    rows: list[tuple[str, dict[str, float]]] = []
+    built: dict[str, BaseRetriever] = {}
 
     for kind in args.retrievers:
         try:
-            retriever = build_retriever(kind, chunks, embedding_model)
+            retriever = shared_retriever(kind, built, chunks, embedding_model)
         except ImportError as exc:
             print(f"\nSkipping '{kind}' retriever: {exc}")
             continue
-
-        built[kind] = retriever
 
         for dedupe in (False, True):
             label = f"{retriever.name}{' +pagededupe' if dedupe else ''}"
@@ -238,7 +300,7 @@ def main() -> None:
 
     k = args.top_k
     print("\nRETRIEVAL RESULTS")
-    header = f"{'retriever':<32}{f'Recall@{k}':>12}{f'Coverage@{k}':>14}{'MRR':>8}{'latency (best of 3)':>22}"
+    header = f"{'retriever':<32}{f'Recall@{k}':>12}{f'Coverage@{k}':>14}{'MRR':>8}{'latency (med/best3)':>22}"
     print(header)
     print("-" * len(header))
     for name, m in rows:
@@ -247,6 +309,10 @@ def main() -> None:
             f"{m['median_latency_ms']:>10.1f}ms"
         )
 
+    print(
+        "\nLatency is the median across questions of the best of three timed runs, after an "
+        "adaptive untimed warm-up (queries are repeated until latency stops improving)."
+    )
     print(
         "\nRecall counts a question as a hit if any expected page is in the top k. "
         "Coverage requires every expected page, which is what comparison questions need. "
@@ -258,9 +324,7 @@ def main() -> None:
         print("\nAnswer grading skipped. Re-run with --llm to grade citations and refusals.")
         return
 
-    retriever = built.get(args.llm_retriever) or build_retriever(
-        args.llm_retriever, chunks, embedding_model
-    )
+    retriever = shared_retriever(args.llm_retriever, built, chunks, embedding_model)
 
     print(f"\nANSWER GRADING (retriever: {retriever.name})")
     answer_metrics = evaluate_answers(retriever, questions, args.top_k)

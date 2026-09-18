@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: financial-rag-ingest
+  namespace: financial-rag
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: financial-rag-ingest
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: ingest
+          image: ghcr.io/YOUR_ORG/financial-document-rag:YOUR_TAG
+          command: ["python", "src/ingest.py", "--replace"]
+          envFrom:
+            - configMapRef:
+                name: financial-rag
+            - secretRef:
+                name: financial-rag-secrets
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+            limits:
+              cpu: "4"
+              memory: "6Gi"
+          volumeMounts:
+            - name: cache
+              mountPath: /home/app/.cache
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

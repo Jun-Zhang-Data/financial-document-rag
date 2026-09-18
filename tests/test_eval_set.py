@@ -68,10 +68,7 @@ def test_questions_are_unique(questions):
 
 
 def test_top_k_cannot_trivially_cover_the_candidate_pool(questions):
-    """The first review's core problem: filtering left only three candidates for top-3.
-
-    Every answerable question must leave a candidate pool clearly larger than the top_k
-    used in the evaluation, otherwise Recall@k is guaranteed by construction.
+    """Guard against trivially small candidate pools that make Recall@k meaningless.
     """
     from retrieval import BM25Retriever
 

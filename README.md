@@ -1,311 +1,229 @@
-# Financial Document RAG — a small, measured, explainable demo
+Financial Document RAG
 
-A personal project that builds a retrieval-augmented generation pipeline over financial
-reports without LangChain or LlamaIndex, so every step is visible and can be explained:
+A hands-on RAG project for question answering over a small synthetic set of financial reports.
 
-- document parsing with company / year / page metadata
-- overlapping fixed-size chunking
-- three retrieval strategies: BM25, dense embeddings, and a hybrid of the two
-- metadata filtering that degrades gracefully instead of returning nothing
-- grounded generation with citations
-- deterministic citation validation
-- retrieval evaluation with Recall@k, Coverage@k and MRR
-- latency, token and cost reporting
-- unit tests, most of which run without any ML dependency
+I built this project to practice and understand the full RAG flow: preparing document chunks, retrieving relevant evidence, passing retrieved context to an LLM, validating citations, evaluating retrieval quality, and exposing the pipeline through an API.
 
-The point of the project is not the size of the corpus. It is that every claim about
-retrieval quality in this README comes from a command you can re-run.
+This is a portfolio and learning project. It is not a production-proven financial system. The corpus is synthetic, the evaluation set is small, and the repository has not been tested with real production traffic.
 
-## Measured results
+What this project focuses on
 
-From `python src/evaluate.py` on 18 questions (15 answerable, 3 deliberately
-unanswerable), `top_k=4`, over a corpus of 5 documents / 39 pages / 59 chunks:
+The parts I focused on most are:
 
-```text
-retriever                           Recall@4    Coverage@4     MRR   latency (best of 3)
+document chunking and metadata such as company, year, and page;
+
+lexical, dense, and hybrid retrieval;
+
+metadata filtering before retrieval;
+
+page-level deduplication so duplicate chunks from the same page do not occupy several top-k positions;
+
+retrieval evaluation with Recall@k, Coverage@k, and MRR;
+
+giving only retrieved context to the LLM for answer generation;
+
+refusing to answer when there is not enough evidence;
+
+checking that citations returned by the LLM came from the retrieved context;
+
+serving the pipeline through FastAPI;
+
+an optional PostgreSQL/pgvector-backed retrieval path.
+
+Dataset and evaluation setup
+
+The repository uses five short synthetic reports for three invented companies. The corpus contains 39 pages and 59 chunks.
+
+I use synthetic data so that I can define page-level ground truth for evaluation and inspect retrieval failures directly. This also means the project does not demonstrate real PDF parsing or retrieval over real company filings.
+
+The evaluation set contains 18 questions: 15 answerable questions and 3 intentionally unanswerable questions. The default evaluation uses top_k=4.
+
+Retrieval results
+
+retriever                           Recall@4    Coverage@4     MRR   latency (med/best3)
 ----------------------------------------------------------------------------------------
-bm25                                    0.80          0.80    0.60       0.3ms
-bm25 +pagededupe                        0.87          0.87    0.63       0.2ms
-dense                                   0.87          0.67    0.50      26.6ms
-dense +pagededupe                       0.87          0.73    0.50      19.3ms
-hybrid(dense+bm25)                      0.87          0.80    0.59      18.5ms
-hybrid(dense+bm25) +pagededupe          0.87          0.80    0.60      24.8ms
-```
+bm25                                    0.80          0.80    0.60       0.1ms
+bm25 + page dedupe                      0.87          0.87    0.63       0.1ms
+dense                                   0.87          0.67    0.50      22.8ms
+dense + page dedupe                     0.87          0.73    0.50      20.7ms
+hybrid                                  0.73          0.73    0.52      24.7ms
+hybrid + page dedupe                    0.87          0.80    0.56      21.4ms
 
-What this actually says, including the parts that are inconvenient:
+These numbers are specific to this small synthetic corpus. They should not be interpreted as evidence that BM25 is generally better than dense or hybrid retrieval.
 
-- Dense retrieval beats BM25 on Recall@4 (0.87 vs 0.80) because it survives vocabulary
-  mismatch. The question asks why the margin *fell*; the report says the margin *declined*.
-  BM25 has no stemming and no synonyms, so it drops the target page out of the top four
-  entirely, while the embedding model still finds it.
-- BM25 beats dense on MRR (0.60 vs 0.50) and on Coverage@4. On questions phrased with the
-  same words as the report ("net revenue retention", "customer acquisition cost payback
-  period"), exact term matching puts the right page first; the embedding model instead
-  spreads similar-sounding financial prose across several pages and retrieves the
-  general business-overview page.
-- The hybrid keeps dense recall and recovers BM25's coverage. That is the expected result,
-  and it is the configuration the app uses by default.
-- Page-level deduplication helps every retriever. Chunk overlap means two adjacent chunks
-  of the same page score almost identically, so a naive top-4 can spend two slots on
-  near-duplicate text — which is fatal for a comparison question that needs pages from two
-  different reports.
-- Neither retriever handles the question that names no company ("why did freight costs
-  increase for the industrial pump manufacturer"): dense fills its top three with the
-  freight company, which is exactly what that distractor was added to expose.
-- BM25 is roughly a hundred times faster per query. Dense and hybrid are within
-  measurement noise of each other because the single query encode (~20ms on CPU)
-  dominates, and BM25 adds a fraction of a millisecond on top. On a 59-chunk corpus none
-  of this matters; the point is that the embedding cost is not free and the table makes it
-  explicit.
+On this dataset, BM25 with page deduplication performed best overall, so I use it as the default local retriever. One useful lesson from the experiment was that a more complex retrieval method is not automatically better; I prefer to compare alternatives with the same evaluation set.
 
-Latency is reported as the best of three runs per question, after five untimed warm-up
-queries. Without that warm-up the first dense calls cost 166ms and fall to 17ms, which
-silently charges model initialisation to whichever retriever runs first.
+Run the retrieval evaluation with:
 
-Coverage@4 is the metric that matters most here. Recall counts a question as answered if
-*any* expected page is retrieved; Coverage requires *all* of them, which is what
-"compare Northstar and BluePeak in 2024" genuinely needs.
+PYTHONPATH=src python src/evaluate.py --retrievers bm25
+PYTHONPATH=src python src/evaluate.py
 
-## Run it
+Recall@k and Coverage@k
 
-```bash
+I use both metrics because they answer different questions.
+
+Recall@4 asks whether at least one expected evidence page appears in the top four retrieved results.
+
+Coverage@4 is stricter for questions that require more than one source. It checks whether all expected evidence pages are present in the top four.
+
+For example, a question comparing two companies may require one page from each company. Retrieving only one of those pages can still give a partial retrieval hit, but it is not enough to fully support the comparison. Coverage helps expose that failure.
+
+Why page deduplication matters
+
+Some pages are split into overlapping chunks. Without deduplication, two chunks from the same page can both appear near the top of the ranking and use two of the available top-k positions.
+
+The retrieval code can therefore keep only the highest-ranked chunk from each page before returning the final results.
+
+On this evaluation set, enabling page deduplication improved the BM25 Recall@4 and Coverage@4 from 0.80 to 0.87.
+
+End-to-end request flow
+
+A query follows this general path:
+
+Client
+  |
+  v
+FastAPI /v1/query
+  |
+  v
+RAGService
+  |
+  v
+metadata filtering
+(company / year when present)
+  |
+  v
+retrieval
+  |
+  v
+top-k evidence chunks
+  |
+  v
+LLM generation using retrieved context
+  |
+  v
+citation validation
+  |
+  v
+JSON response
+
+api.py handles the HTTP request and response. service.py coordinates the retrieval and generation steps. The retrieval modules find evidence, and generation.py formats the retrieved evidence for the LLM and validates citations in the returned answer.
+
+Retrieval approaches
+
+The in-memory evaluation path supports three retrieval approaches.
+
+Lexical retrieval
+
+The BM25 retriever ranks chunks using the words that appear in the query and document text. This works well when the question uses terminology similar to the reports.
+
+Dense retrieval
+
+Dense retrieval converts the query and chunks into embeddings and ranks them by semantic similarity. This can help when the question and the document express the same idea using different words.
+
+Hybrid retrieval
+
+The hybrid retriever combines lexical and dense rankings using Reciprocal Rank Fusion (RRF). RRF combines the relative ranks from the two retrievers instead of trying to compare their raw scores directly.
+
+The repository also contains a PostgreSQL-backed path that combines PostgreSQL full-text search with pgvector dense retrieval. I treat this as a database-backed version of the retrieval service rather than as evidence that the system has been operated at production scale.
+
+Generation and grounding
+
+After retrieval, the selected chunks are formatted as numbered sources and included in the LLM input.
+
+The generation instructions tell the model to:
+
+answer only from the supplied context;
+
+return INSUFFICIENT_EVIDENCE when the context is not enough;
+
+cite factual claims using the supplied document/page citations;
+
+avoid inventing citations.
+
+If retrieval returns no evidence at all, the code does not call the LLM and returns an insufficient-evidence result instead.
+
+Citation validation: what it does and does not prove
+
+After the LLM returns an answer, the code extracts citations such as:
+
+[Northstar Industrial 2024, p.18]
+
+It then checks whether each cited page was actually included in the retrieved context provided to the model.
+
+This protects against one specific failure mode: the model inventing a citation to a page it never received.
+
+However, this check does not prove that the text on that page semantically supports every claim in the answer. For example, a model could cite the correct page but misstate a number from that page. Claim-level semantic groundedness evaluation is not implemented in this version of the project.
+
+API
+
+The FastAPI service exposes a query endpoint. A retrieval-only request does not require LLM credentials.
+
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements-dev.txt
-cp .env.example .env               # only needed for answer generation
-```
+cp .env.example .env
 
-Retrieval and evaluation need no API key. BM25 needs no model download at all:
+PYTHONPATH=src uvicorn api:app --app-dir src --host 0.0.0.0 --port 8080
 
-```bash
-python src/evaluate.py --retrievers bm25            # instant, pure Python
-python src/evaluate.py                              # all three retrievers
-python src/evaluate.py --retrievers bm25 --verbose  # per-question hit/miss detail
-python -m pytest                                    # 64 tests
-```
+Example retrieval-only request:
 
-Ask questions:
+curl -X POST http://localhost:8080/v1/query \
+  -H 'content-type: application/json' \
+  -d '{
+    "question":"Why did Northstar EBITDA margin fall in 2024?",
+    "generate":false,
+    "top_k":4
+  }'
 
-```bash
-python src/app.py --retriever bm25 --no-llm --question "Why did Northstar's EBITDA margin fall in 2024?"
-python src/app.py                                   # interactive, hybrid retrieval, calls the LLM
-python src/app.py --dedupe-pages --top-k 5
-```
+The response includes the retrieved sources, applied filter information, and retrieval latency. When generation is enabled and LLM credentials are configured, it also includes the generated answer, citation-validation result, token usage, and generation latency.
 
-Answer generation needs `OPENAI_API_KEY` and `OPENAI_MODEL` in `.env`. Nothing else does.
+Repository structure
 
-## How it fits together
-
-```text
-data/*.txt
-   │  parse headers and [PAGE n] markers          documents.py
-   ▼
-Chunk(company, year, page, text) + citation
-   │  90-word windows, 15-word overlap
-   ▼
-metadata filter (all companies, all years)        retrieval.py
-   │  relax if the filter empties the pool
-   ▼
-BM25 │ dense embeddings │ RRF hybrid
-   │  optional page-level dedupe, top-k
-   ▼
-prompt with numbered, citation-tagged sources     generation.py
-   ▼
-LLM answer  →  citation validation, tokens, cost  app.py / evaluate.py
-```
-
-```text
 .
-├── data/                     5 synthetic annual reports, 39 pages
-│   ├── northstar_2023.txt    industrial manufacturer
-│   ├── northstar_2024.txt
-│   ├── bluepeak_2023.txt     software company
-│   ├── bluepeak_2024.txt
-│   └── harborlight_2024.txt  freight company: a deliberate lexical distractor
 ├── src/
-│   ├── documents.py          parsing, chunking, corpus stats
-│   ├── retrieval.py          filters, BM25, dense, hybrid
-│   ├── generation.py         prompt, LLM call, citation validation, cost
-│   ├── app.py                CLI
-│   └── evaluate.py           Recall@k, Coverage@k, MRR, answer grading
-├── tests/                    64 tests, no API key needed
-├── conftest.py               puts src/ on sys.path for the tests
-├── pytest.ini
-├── eval_questions.json       18-question gold set
-├── REVIEW_01_initial.md      first code review of this project
-├── requirements.txt          pinned
-└── requirements-dev.txt
-```
+│   ├── api.py                 FastAPI request/response layer
+│   ├── service.py             coordinates retrieval and generation
+│   ├── documents.py           document loading and chunking
+│   ├── retrieval.py           BM25, dense and hybrid retrieval
+│   ├── postgres_retrieval.py  optional PostgreSQL/pgvector retrieval
+│   ├── generation.py          LLM generation and citation validation
+│   ├── evaluate.py            retrieval evaluation
+│   └── app.py                 CLI entry point
+├── tests/
+├── eval_questions.json
+├── compose.yaml
+├── Dockerfile
+└── deploy/
 
-## Design decisions, and what they cost
+The repository also contains Docker, CI, metrics, tracing, and Kubernetes examples. They are supporting infrastructure for experimentation; the core purpose of this project is to demonstrate and explore the RAG pipeline itself.
 
-### Parsing
+Tests
 
-Documents carry a header and page markers:
+Run the offline test suite with:
 
-```text
-COMPANY: Northstar Industrial
-YEAR: 2024
+pytest
 
-[PAGE 18]
-Adjusted EBITDA decreased to EUR 246 million ...
-```
+The repository also contains integration and container-related checks for the database-backed path.
 
-Company, year and page travel with every chunk, so a citation can be produced without a
-second lookup. A malformed document raises `DocumentFormatError` naming the file and the
-missing field rather than an `AttributeError` from a failed regex.
+Current limitations
 
-Real reports are PDFs. Parsing them (Docling, PyMuPDF) is a genuinely harder problem —
-tables, multi-column layouts, headers and footers — and is deliberately out of scope. The
-text format keeps the metadata contract explicit.
+The main limitations I would address next are:
 
-### Chunking
+Synthetic corpus only. There is no real PDF ingestion or parsing. Real financial reports contain tables, footnotes, headers, page-numbering issues, and scanned content that this project does not cover.
 
-Fixed 90-word windows with 15 words of overlap. Overlap means a sentence sitting on a
-boundary still appears whole in one of the two neighbours.
+Small evaluation set. Eighteen questions are useful for comparing configurations and detecting regressions, but they are not enough to make broad claims about retrieval quality.
 
-The cost is real and measurable: 39 pages become 59 chunks, 20 pages split into more than
-one chunk, and adjacent chunks share text. That duplication is exactly why
-`--dedupe-pages` improves Coverage@4. A production system would chunk on headings or
-semantic boundaries instead.
+No claim-level groundedness evaluation. Citation validation confirms that a cited page was supplied to the model, not that the page semantically supports every generated claim.
 
-### Metadata filtering
+No production traffic or load testing. The repository should not be interpreted as evidence that the service has been operated under real user traffic or production SLAs.
 
-Filters are extracted from the question and applied as OR within a field, AND across
-fields:
+No published LLM answer-quality results. The measured results in this README are retrieval results. I do not claim measured semantic answer quality from the current repository.
 
-```text
-"How did Northstar's margin change from 2023 to 2024?"
-  → company in {Northstar Industrial} AND year in {2023, 2024}   → 29 candidate chunks
-```
+Simple authentication. The optional service API key is suitable for experimentation, not a complete production authentication or rate-limiting design.
 
-Three details matter, and each of them was a bug in the first version of this project:
+Possible next experiments include reranking, query decomposition for multi-source questions, a larger evaluation set, and claim-level groundedness evaluation. I would evaluate each change against the existing baseline rather than assume it improves the system.
 
-1. *All* years are extracted, not just the first. Otherwise a cross-year question is
-   silently restricted to 2023 and can never answer.
-2. *All* companies are extracted, not just the first match. Otherwise a comparison
-   question silently drops one issuer.
-3. If a filter empties the candidate pool, it is relaxed step by step
-   (company AND year → company → year → unfiltered) and the relaxation is reported:
+License
 
-```text
-Metadata filter: company in {Northstar Industrial} (relaxed from: company in {Northstar Industrial} AND year in {2026})
-Note: the requested filter matched nothing, so it was relaxed.
-```
-
-A hard filter that returns nothing is worse than no filter: the generator gets no
-evidence, cannot even attempt a grounded answer, and the user pays for a call that was
-guaranteed to fail. Relaxing and disclosing is the better failure mode.
-
-### Retrieval
-
-BM25 is implemented directly (Okapi, k1=1.5, b=0.75) so the lexical baseline has no hidden
-behaviour. Dense retrieval uses `sentence-transformers/all-MiniLM-L6-v2` with embeddings
-L2-normalised at encode time, which makes a dot product equal to cosine similarity.
-
-The hybrid fuses the two with reciprocal rank fusion, `score = Σ 1/(60 + rank)`. RRF
-combines *rankings*, which avoids having to normalise a BM25 score and a cosine similarity
-onto a common scale — a comparison that has no principled answer.
-
-A baseline exists because "we used embeddings" is not a result. Without BM25 in the table
-there is no way to know whether the embedding model earns its latency, and on this corpus
-the honest answer is "on recall yes, on ranking no".
-
-### Generation
-
-Only retrieved chunks are sent. The prompt requires the model to answer from context, to
-reply `INSUFFICIENT_EVIDENCE` when the context does not support an answer, and to cite
-using the exact citation printed above each source.
-
-Hardening that the demo does need:
-
-- if retrieval returned nothing, no request is made at all
-- `temperature=0` for reproducibility, with a fallback for models that reject the
-  parameter
-- a 30-second timeout and two retries
-- credentials are only required when a call is actually going to happen, so retrieval,
-  evaluation and tests all run without them
-
-### Citation validation
-
-Every citation in the answer is parsed and checked against the citations that were
-actually supplied:
-
-```text
-CITATION CHECK
-Cited: [Northstar Industrial 2024, p.18]
-Supported by retrieved context: 1/1
-```
-
-An answer citing `p.19` when only `p.18` was retrieved is flagged as `UNSUPPORTED`. This is
-deterministic, costs nothing, and catches the most visible RAG failure: a plausible
-citation pointing at a page the model never saw. It does not verify that the *claim*
-matches the source — that needs a judge model or a human, and is listed below as future
-work.
-
-### Evaluation set
-
-18 questions in `eval_questions.json`, chosen so the metric can fail:
-
-- single-source questions
-- cross-year questions requiring two reports
-- cross-company comparison questions
-- a question that names no company at all ("the industrial pump manufacturer"), where
-  metadata filtering cannot help and the freight company competes lexically
-- a stated negative ("Did BluePeak pay a dividend in 2024?" — the report says no dividend
-  is proposed)
-- three unanswerable questions (a year outside the corpus, a fact never stated) where the
-  correct behaviour is refusal
-
-`tests/test_eval_set.py` asserts that every expected page exists in the corpus, and that
-every answerable question leaves a candidate pool larger than `2 × top_k`. That second
-test exists because the first version of this project had a 9-chunk corpus in which
-filtering left exactly 3 candidates for `top_k=3`: Recall@3 was 1.00 by construction and
-would have stayed 1.00 with the embedding model deleted.
-
-### Answer grading, latency and cost
-
-`python src/evaluate.py --llm` grades generated answers: share of answers containing a
-citation, share with no unsupported citation, and refusal rate on the three unanswerable
-questions. It reports total tokens and, if prices are configured, estimated cost.
-
-`app.py` reports retrieval, generation and end-to-end latency separately, plus input and
-output tokens per query. Set `INPUT_PRICE_PER_1M_TOKENS` and `OUTPUT_PRICE_PER_1M_TOKENS`
-in `.env` to turn tokens into an estimated dollar figure:
-
-```text
-cost = input tokens × input price + output tokens × output price
-```
-
-Sending four chunks instead of five whole reports is the point of RAG: it is what keeps
-the input token count in the hundreds.
-
-## Known limitations
-
-
-
-- The corpus is synthetic. It exercises the pipeline honestly, but it is not evidence that
-  the pipeline handles real PDF filings.
-- 15 answerable questions is a small gold set. A single question changes Recall@4 by 0.07,
-  so the differences between the retrievers in that table are directional, not
-  statistically significant.
-- The answer-grading path (`--llm`) has not been run here: this environment has no API
-  key. The retrieval numbers above are reproduced output; the answer metrics are not.
-- Everything is in memory and rebuilt at startup. There is no index persistence and no
-  caching.
-- Citation validation checks provenance, not correctness. A supported citation attached to
-  a wrong claim would pass.
-- The BM25 tokenizer has no stemming, and possessives ("Northstar's") split into two
-  tokens, which measurably shifts lexical rankings.
-
-## What production would need
-
-1. real PDF parsing (Docling / PyMuPDF), including tables
-2. a persistent index (pgvector, Elasticsearch, OpenSearch) instead of in-memory vectors
-3. a cross-encoder reranker on top of hybrid retrieval
-4. heading-aware or semantic chunking
-5. a much larger gold set, and answer-quality grading by a judge model with human spot checks
-6. a FastAPI service with request tracing
-7. caching of embeddings and of repeated questions
-8. monitoring of retrieval quality, latency and cost per query in production
-
+MIT — see LICENSE.

@@ -118,7 +118,7 @@ def test_page_numbers_are_preserved_for_multi_chunk_pages(tmp_path: Path):
 
 
 def test_real_corpus_actually_exercises_the_chunker():
-    """Regression test for the first review: the corpus used to be too small to split."""
+    """Regression test ensuring the corpus actually exercises multi-chunk pages."""
     stats = corpus_stats(load_chunks(DATA_DIR))
 
     assert stats["documents"] >= 4

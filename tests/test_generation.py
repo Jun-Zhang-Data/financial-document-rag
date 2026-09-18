@@ -141,6 +141,8 @@ def test_generate_answer_reports_usage_and_validates_citations(monkeypatch):
     assert result.citations.is_valid
     assert client.calls[0]["temperature"] == 0
     assert client.calls[0]["model"] == "stub-model"
+    assert client.calls[0]["instructions"]
+    assert client.calls[0]["store"] is False
 
 
 def test_generate_answer_retries_without_temperature_when_rejected(monkeypatch):

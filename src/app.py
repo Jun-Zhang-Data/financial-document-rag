@@ -1,8 +1,8 @@
 """Interactive RAG demo over the financial documents in ./data.
 
 Usage:
-    python src/app.py                                  # interactive, hybrid retrieval
-    python src/app.py --retriever bm25                 # lexical only, no model download
+    python src/app.py                                  # interactive, BM25 retrieval
+    python src/app.py --retriever dense                # embeddings (downloads a model)
     python src/app.py --question "..." --top-k 5       # one-shot
 """
 
@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import os
 import time
-from typing import List
 
 from dotenv import load_dotenv
 
@@ -25,20 +24,35 @@ from retrieval import (
 )
 
 
+def positive_int(value: str) -> int:
+    """argparse type that rejects zero and negatives with a readable message."""
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError(f"must be at least 1, got {number}")
+    return number
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Financial document RAG demo")
     parser.add_argument(
         "--retriever",
         choices=["hybrid", "dense", "bm25"],
-        default="hybrid",
-        help="retrieval strategy (default: hybrid = dense + BM25 via reciprocal rank fusion)",
+        default="bm25",
+        help=(
+            "retrieval strategy (default: bm25, which scored best on the evaluation set "
+            "and needs no model download)"
+        ),
     )
-    parser.add_argument("--top-k", type=int, default=4, help="chunks passed to the LLM")
     parser.add_argument(
-        "--dedupe-pages",
-        action="store_true",
-        help="keep only the best-scoring chunk per source page",
+        "--top-k", type=positive_int, default=4, help="chunks passed to the LLM"
     )
+    parser.add_argument(
+        "--no-dedupe-pages",
+        dest="dedupe_pages",
+        action="store_false",
+        help="allow several chunks from the same page in the top-k (measurably worse)",
+    )
+    parser.set_defaults(dedupe_pages=True)
     parser.add_argument("--question", help="ask one question and exit")
     parser.add_argument(
         "--no-llm",
@@ -48,7 +62,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def print_retrieval(retriever: BaseRetriever, question: str, retrieved: List[RetrievalResult]) -> None:
+def print_retrieval(retriever: BaseRetriever, question: str, retrieved: list[RetrievalResult]) -> None:
     filter_result = retriever.filter_for(question)
 
     print("\nRETRIEVAL")

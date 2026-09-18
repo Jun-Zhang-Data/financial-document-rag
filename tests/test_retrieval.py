@@ -195,6 +195,65 @@ def test_hybrid_requires_at_least_one_retriever():
         HybridRetriever([])
 
 
+def test_hybrid_fuses_ranks_inside_the_candidate_pool(corpus):
+    """Regression test: fusion must not depend on chunks the filter excluded.
+
+    Fusing over the whole corpus and filtering afterwards gives a different order,
+    because each retriever demotes pool members by a different number of intervening
+    non-pool chunks. Adding documents that the metadata filter removes must therefore
+    leave the ranking of the surviving pool untouched.
+    """
+    query = "Compare Northstar EBITDA margin and freight costs in 2024"
+
+    northstar_only = [c for c in corpus if c.company == "Northstar Industrial"]
+    with_distractors = northstar_only + [
+        c for c in corpus if c.company != "Northstar Industrial"
+    ]
+
+    def hybrid_for(chunks):
+        return HybridRetriever(
+            [BM25Retriever(chunks), BM25Retriever(chunks, k1=1.2, b=0.6)]
+        )
+
+    small = [r.chunk.text for r in hybrid_for(northstar_only).retrieve(query, top_k=5)]
+    large = [r.chunk.text for r in hybrid_for(with_distractors).retrieve(query, top_k=5)]
+
+    assert small == large
+
+
+def test_hybrid_scores_are_rrf_values(corpus):
+    hybrid = HybridRetriever([BM25Retriever(corpus)], k=60)
+    results = hybrid.retrieve("Northstar EBITDA margin 2024", top_k=3)
+
+    # With a single sub-retriever the fused score is exactly 1 / (k + rank).
+    assert results[0].score == pytest.approx(1 / 61)
+    assert results[1].score == pytest.approx(1 / 62)
+
+
+def test_hybrid_does_not_expose_a_corpus_wide_score(corpus):
+    hybrid = HybridRetriever([BM25Retriever(corpus)])
+
+    with pytest.raises(NotImplementedError):
+        hybrid.score_all("anything")
+
+
+@pytest.mark.parametrize("top_k", [0, -1, -2])
+def test_non_positive_top_k_is_rejected(bm25, top_k):
+    """Negative top_k used to hit Python's negative slicing and return most of the pool."""
+    with pytest.raises(ValueError, match="top_k must be at least 1"):
+        bm25.retrieve("EBITDA margin", top_k=top_k)
+
+
+def test_rank_orders_only_the_given_pool(bm25, corpus):
+    pool = [i for i, chunk in enumerate(corpus) if chunk.company == "BluePeak Software"]
+    scores = bm25.score_all("EBITDA margin")
+
+    ranked = bm25.rank("EBITDA margin", pool)
+
+    assert [i for i, _ in ranked] == sorted(pool, key=lambda i: (-scores[i], i))
+    assert [score for _, score in ranked] == [scores[i] for i, _ in ranked]
+
+
 def test_dedupe_pages_returns_distinct_pages(bm25):
     results = bm25.retrieve("Northstar 2024 freight energy costs", top_k=4, dedupe_pages=True)
     keys = [r.chunk.source_key for r in results]

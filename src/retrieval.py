@@ -10,8 +10,8 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Sequence, Tuple
 
 from documents import Chunk
 
@@ -21,7 +21,7 @@ _TOKEN_RE = re.compile(r"[a-z0-9]+(?:[.,][0-9]+)*")
 DEFAULT_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
-def tokenize(text: str) -> List[str]:
+def tokenize(text: str) -> list[str]:
     """Lowercase word tokenizer used by BM25.
 
     No stemming: 'declined' and 'decline' are different terms. That is a real weakness of
@@ -32,8 +32,8 @@ def tokenize(text: str) -> List[str]:
 
 @dataclass(frozen=True)
 class QueryFilters:
-    companies: Tuple[str, ...] = ()
-    years: Tuple[str, ...] = ()
+    companies: tuple[str, ...] = ()
+    years: tuple[str, ...] = ()
 
     @property
     def is_empty(self) -> bool:
@@ -52,7 +52,7 @@ class QueryFilters:
 
 @dataclass
 class FilterResult:
-    candidate_ids: List[int]
+    candidate_ids: list[int]
     filters: QueryFilters
     applied: QueryFilters
     relaxed: bool = False
@@ -70,12 +70,12 @@ class RetrievalResult:
     rank: int
 
 
-def extract_years(query: str) -> Tuple[str, ...]:
+def extract_years(query: str) -> tuple[str, ...]:
     """All four-digit years in the query, in order of appearance, de-duplicated.
 
     Taking every year (not just the first) is what makes 'from 2023 to 2024' work.
     """
-    seen: List[str] = []
+    seen: list[str] = []
     for match in _YEAR_RE.finditer(query):
         year = match.group(0)
         if year not in seen:
@@ -83,7 +83,7 @@ def extract_years(query: str) -> Tuple[str, ...]:
     return tuple(seen)
 
 
-def extract_companies(query: str, known_companies: Iterable[str]) -> Tuple[str, ...]:
+def extract_companies(query: str, known_companies: Iterable[str]) -> tuple[str, ...]:
     """All known companies mentioned in the query, by full name or first word.
 
     Matching every company (not just the first) is what makes comparison questions work.
@@ -91,15 +91,16 @@ def extract_companies(query: str, known_companies: Iterable[str]) -> Tuple[str, 
     rather than silently filtering to the wrong issuer.
     """
     query_lower = query.lower()
-    matched: List[str] = []
+    matched: list[str] = []
 
     for company in sorted(set(known_companies), key=len, reverse=True):
         name = company.lower()
         short_name = company.split()[0].lower()
 
-        if _contains_word(query_lower, name) or _contains_word(query_lower, short_name):
-            if company not in matched:
-                matched.append(company)
+        mentioned = _contains_word(query_lower, name) or _contains_word(query_lower, short_name)
+
+        if mentioned and company not in matched:
+            matched.append(company)
 
     return tuple(matched)
 
@@ -160,15 +161,28 @@ class BaseRetriever:
     def filter_for(self, query: str) -> FilterResult:
         return apply_filters(self.chunks, parse_filters(query, self.companies))
 
-    def score_all(self, query: str) -> List[float]:
+    def score_all(self, query: str) -> list[float]:
+        """Score every chunk in the corpus. Overridden by each concrete retriever."""
         raise NotImplementedError
+
+    def rank(self, query: str, candidate_ids: Sequence[int]) -> list[tuple[int, float]]:
+        """Order the candidate pool best-first, as (chunk id, score) pairs.
+
+        Ranking is a separate step from scoring because the hybrid retriever fuses
+        *ranks*, and those ranks must be computed over the same pool that is being ranked.
+        See HybridRetriever.rank.
+        """
+        scores = self.score_all(query)
+        ordered = sorted(candidate_ids, key=lambda i: (-scores[i], i))
+        return [(i, scores[i]) for i in ordered]
 
     def retrieve(
         self,
         query: str,
         top_k: int = 3,
         dedupe_pages: bool = False,
-    ) -> List[RetrievalResult]:
+        filter_result: FilterResult | None = None,
+    ) -> list[RetrievalResult]:
         """Return the top-k chunks that survive metadata filtering.
 
         With ``dedupe_pages`` only the best-scoring chunk per source page is kept. Chunk
@@ -176,29 +190,30 @@ class BaseRetriever:
         which can fill the top-k with near-duplicate text and crowd out a second document
         that the question actually needs.
         """
-        result = self.filter_for(query)
+        if top_k < 1:
+            raise ValueError(f"top_k must be at least 1, got {top_k}")
+
+        result = filter_result or self.filter_for(query)
 
         if not result.candidate_ids:
             return []
 
-        scores = self.score_all(query)
-
-        ordered = sorted(result.candidate_ids, key=lambda i: (-scores[i], i))
+        ordered = self.rank(query, result.candidate_ids)
 
         if dedupe_pages:
             seen_pages = set()
             deduped = []
-            for i in ordered:
+            for i, score in ordered:
                 key = self.chunks[i].source_key
                 if key in seen_pages:
                     continue
                 seen_pages.add(key)
-                deduped.append(i)
+                deduped.append((i, score))
             ordered = deduped
 
         return [
-            RetrievalResult(chunk=self.chunks[i], score=float(scores[i]), rank=rank)
-            for rank, i in enumerate(ordered[:top_k], start=1)
+            RetrievalResult(chunk=self.chunks[i], score=float(score), rank=rank)
+            for rank, (i, score) in enumerate(ordered[:top_k], start=1)
         ]
 
 
@@ -224,12 +239,12 @@ class BM25Retriever(BaseRetriever):
             document_frequency.update(set(tokens))
 
         n_docs = len(self.chunks)
-        self.idf: Dict[str, float] = {
+        self.idf: dict[str, float] = {
             term: math.log(1 + (n_docs - df + 0.5) / (df + 0.5))
             for term, df in document_frequency.items()
         }
 
-    def score_all(self, query: str) -> List[float]:
+    def score_all(self, query: str) -> list[float]:
         query_terms = tokenize(query)
         scores = [0.0] * len(self.chunks)
 
@@ -276,7 +291,7 @@ class DenseRetriever(BaseRetriever):
             show_progress_bar=False,
         )
 
-    def score_all(self, query: str) -> List[float]:
+    def score_all(self, query: str) -> list[float]:
         query_embedding = self.model.encode(
             [query],
             normalize_embeddings=True,
@@ -291,6 +306,13 @@ class HybridRetriever(BaseRetriever):
 
     RRF combines rankings rather than scores, which avoids having to normalise a BM25
     score and a cosine similarity onto a common scale.
+
+    The fusion happens *inside* the filtered candidate pool. Fusing over the whole corpus
+    and filtering afterwards is not equivalent: each retriever demotes pool members by a
+    different number of intervening non-pool chunks, so the fused order changes. On this
+    corpus that inconsistency altered the top-4 on most evaluation questions, including
+    which company ranked first on a comparison question. Filtering before ranking also
+    keeps the hybrid on the same footing as the single retrievers.
     """
 
     name = "hybrid"
@@ -304,16 +326,20 @@ class HybridRetriever(BaseRetriever):
         self.k = k
         self.name = "hybrid(" + "+".join(r.name for r in self.retrievers) + ")"
 
-    def score_all(self, query: str) -> List[float]:
-        fused = [0.0] * len(self.chunks)
+    def rank(self, query: str, candidate_ids: Sequence[int]) -> list[tuple[int, float]]:
+        fused: dict[int, float] = {i: 0.0 for i in candidate_ids}
 
         for retriever in self.retrievers:
-            scores = retriever.score_all(query)
-            order = sorted(range(len(self.chunks)), key=lambda i: (-scores[i], i))
-            for rank, i in enumerate(order, start=1):
+            for rank, (i, _score) in enumerate(retriever.rank(query, candidate_ids), start=1):
                 fused[i] += 1.0 / (self.k + rank)
 
-        return fused
+        ordered = sorted(candidate_ids, key=lambda i: (-fused[i], i))
+        return [(i, fused[i]) for i in ordered]
+
+    def score_all(self, query: str) -> list[float]:
+        raise NotImplementedError(
+            "HybridRetriever fuses ranks within a candidate pool; use rank() or retrieve()"
+        )
 
 
 def build_retriever(

@@ -1,5 +1,21 @@
-# Pinned so that a clone reproduces the numbers in the README.
+# Runtime dependencies for the container image and the plain-pip workflow.
+#
+# This mirrors [project].dependencies in pyproject.toml plus the optional "otel" group:
+# the image ships the OpenTelemetry packages so tracing can be switched on with
+# OTEL_EXPORTER_OTLP_ENDPOINT alone, without rebuilding.
+#
+# Model and numeric libraries are pinned exactly so the measured retrieval results stay
+# reproducible; service dependencies are constrained to compatible majors.
 numpy==2.5.3
 openai==3.14.1
 python-dotenv==1.2.3
 sentence-transformers==6.0.1
+fastapi>=0.128,<1
+uvicorn[standard]>=0.48,<1
+pydantic-settings>=2.14,<3
+prometheus-client>=0.25,<1
+psycopg[binary,pool]>=3.2,<4
+opentelemetry-api>=1.42,<2
+opentelemetry-sdk>=1.42,<2
+opentelemetry-exporter-otlp-proto-http>=1.42,<2
+opentelemetry-instrumentation-fastapi>=0.63b0,<1

@@ -9,7 +9,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
@@ -48,7 +47,7 @@ def chunk_text(
     text: str,
     max_words: int = DEFAULT_MAX_WORDS,
     overlap_words: int = DEFAULT_OVERLAP_WORDS,
-) -> List[str]:
+) -> list[str]:
     """Split text into fixed-size word windows with overlap.
 
     Overlap exists so that a sentence sitting on a chunk boundary still appears whole in
@@ -65,7 +64,7 @@ def chunk_text(
     if len(words) <= max_words:
         return [" ".join(words)] if words else []
 
-    chunks: List[str] = []
+    chunks: list[str] = []
     start = 0
 
     while start < len(words):
@@ -84,7 +83,7 @@ def parse_document(
     path: Path,
     max_words: int = DEFAULT_MAX_WORDS,
     overlap_words: int = DEFAULT_OVERLAP_WORDS,
-) -> List[Chunk]:
+) -> list[Chunk]:
     """Read one document, extract metadata, and create structured chunks."""
     raw = path.read_text(encoding="utf-8")
 
@@ -104,7 +103,7 @@ def parse_document(
     if len(parts) < 3:
         raise DocumentFormatError(f"{path.name}: no '[PAGE n]' markers found")
 
-    chunks: List[Chunk] = []
+    chunks: list[Chunk] = []
 
     # parts == [preamble, page_no, page_text, page_no, page_text, ...]
     for i in range(1, len(parts), 2):
@@ -126,7 +125,7 @@ def parse_document(
     return chunks
 
 
-def load_chunks(data_dir: Path | None = None) -> List[Chunk]:
+def load_chunks(data_dir: Path | None = None) -> list[Chunk]:
     """Load every document in the data directory and combine their chunks."""
     directory = data_dir or DATA_DIR
     paths = sorted(directory.glob("*.txt"))
@@ -134,7 +133,7 @@ def load_chunks(data_dir: Path | None = None) -> List[Chunk]:
     if not paths:
         raise DocumentFormatError(f"no .txt documents found in {directory}")
 
-    chunks: List[Chunk] = []
+    chunks: list[Chunk] = []
 
     for path in paths:
         chunks.extend(parse_document(path))
@@ -142,7 +141,7 @@ def load_chunks(data_dir: Path | None = None) -> List[Chunk]:
     return chunks
 
 
-def corpus_stats(chunks: List[Chunk]) -> dict:
+def corpus_stats(chunks: list[Chunk]) -> dict:
     """Small summary used by the CLI and the evaluation report."""
     word_counts = [len(chunk.text.split()) for chunk in chunks]
 

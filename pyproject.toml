@@ -1,0 +1,54 @@
+[project]
+name = "financial-document-rag"
+version = "1.0.0"
+description = "Measured financial-document RAG with a production FastAPI + PostgreSQL/pgvector deployment path"
+requires-python = ">=3.12"
+dependencies = [
+  "numpy==2.5.3",
+  "openai==3.14.1",
+  "python-dotenv==1.2.3",
+  "sentence-transformers==6.0.1",
+  "fastapi>=0.128,<1",
+  "uvicorn[standard]>=0.48,<1",
+  "pydantic-settings>=2.14,<3",
+  "prometheus-client>=0.25,<1",
+  "psycopg[binary,pool]>=3.2,<4",
+]
+
+[dependency-groups]
+dev = [
+  "pytest==9.1.1",
+  "httpx>=0.28,<1",
+  "ruff>=0.14,<1",
+  "mypy>=1.18,<2",
+  "pip-audit>=2.9,<3",
+]
+otel = [
+  "opentelemetry-api>=1.42,<2",
+  "opentelemetry-sdk>=1.42,<2",
+  "opentelemetry-exporter-otlp-proto-http>=1.42,<2",
+  "opentelemetry-instrumentation-fastapi>=0.63b0,<1",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = ["integration: tests that require external infrastructure such as PostgreSQL/pgvector"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true

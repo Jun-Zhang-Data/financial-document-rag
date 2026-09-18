@@ -1,0 +1,87 @@
+name: financial-document-rag
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: rag
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: rag
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d rag"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  ingest:
+    build: .
+    command: ["python", "src/ingest.py", "--replace"]
+    environment:
+      DATABASE_URL: postgresql://rag:rag@postgres:5432/rag
+      EMBEDDING_MODEL: sentence-transformers/all-MiniLM-L6-v2
+      EMBEDDING_DIMENSION: "384"
+      HF_HOME: /home/app/.cache/huggingface
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - hf_cache:/home/app/.cache/huggingface
+    restart: "no"
+
+  api:
+    build: .
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      RETRIEVAL_BACKEND: postgres
+      DATABASE_URL: postgresql://rag:rag@postgres:5432/rag
+      DB_POOL_MIN_SIZE: ${DB_POOL_MIN_SIZE:-1}
+      DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-10}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-384}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      SERVICE_API_KEY: ${SERVICE_API_KEY:-}
+      METRICS_ENABLED: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      HF_HOME: /home/app/.cache/huggingface
+    depends_on:
+      ingest:
+        condition: service_completed_successfully
+    volumes:
+      - hf_cache:/home/app/.cache/huggingface
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles: ["observability"]
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:12.1.0
+    profiles: ["observability"]
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  hf_cache:
